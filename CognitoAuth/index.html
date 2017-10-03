@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>CognitoAuth</title>
+	</head>
+	<body>
+		<script src="aws-cognito-sdk.min.js"></script>
+	    <script src="amazon-cognito-identity.min.js"></script>
+	    <script src="aws-sdk.min.js"></script>
+
+	    <script type="text/javascript">
+	    	// When using loose Javascript files:
+    		var CognitoUserPool = AmazonCognitoIdentity.CognitoUserPool;
+
+    		var poolData = {
+		        UserPoolId : 'eu-central-1_LaVer2K0o',
+		        ClientId : '5d9sc5ijad1fn4qimlqefb6ar5'
+		    };
+
+		    var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(poolData);
+
+		    var attributeList = [];
+
+		    // **************************************************
+		    // Registration
+		    // **************************************************
+
+
+		    /*
+		    var dataEmail = {
+		        Name : 'email',
+		        Value : 'max.geithe@icloud.com'
+		    };
+
+		    var attributeEmail = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserAttribute(dataEmail);
+
+		    attributeList.push(attributeEmail);
+
+		    userPool.signUp('max', 'password', attributeList, null, function(err, result){
+		        if (err) {
+		            alert(err);
+		            return;
+		        }
+		        cognitoUser = result.user;
+		        console.log('user name is ' + cognitoUser.getUsername());
+		    });
+		    */
+
+
+		    // ***************************************************
+		    // Login and get identity
+		    // ***************************************************
+
+		    var authenticationData = {
+		        Username : 'max',
+		        Password : 'password',
+		    };
+
+		    var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
+
+		    var userData = {
+		        Username : 'max',
+		        Pool : userPool
+		    };
+
+		    var cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
+		    cognitoUser.authenticateUser(authenticationDetails, {
+		        onSuccess: function (result) {
+		            console.log('access token + ' + result.getAccessToken().getJwtToken());
+
+		            
+		            AWS.config.region = 'eu-central-1';
+		            AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+		                IdentityPoolId : 'eu-central-1:5c682bd7-43cd-4048-b5a8-3cc77e5de831', // your identity pool id here
+		                Logins : {
+		                    // Change the key below according to the specific region your user pool is in.
+		                    'cognito-idp.eu-central-1.amazonaws.com/eu-central-1_LaVer2K0o' : result.getIdToken().getJwtToken()
+		                }
+		            });
+		            
+
+		            AWS.config.credentials.get(function(){
+		            	// this is a unique user key, use it as hashkey in your user database 
+		            	// @todo: better get it serverside
+		            	console.log("identityId:", AWS.config.credentials.identityId);
+		            });
+
+		            // @todo: there are user roles for auth and unauth users, use the auth one in all lambda funtions with database transaactions
+
+		        },
+
+		        onFailure: function(err) {
+		            alert(err);
+		        },
+
+		    });
+
+
+	    </script>
+
+	    <h1>Hallo world</h1>
+	</body>
+</html>
