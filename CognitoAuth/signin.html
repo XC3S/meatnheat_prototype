@@ -119,6 +119,7 @@
 			            		url: "https://jbfzhbbbkl.execute-api.eu-central-1.amazonaws.com/prod/createrecipe",
 			            		headers: {
 			            			Authorization: result.getIdToken().getJwtToken()
+			            			// @TODO: add identityid as header param... not cool but the only way right now...
 			            		},
 			            		data: {
 			            			hallo: "world"
