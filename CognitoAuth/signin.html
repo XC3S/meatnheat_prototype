@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>SignIn</title>
+
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+		<style type="text/css">
+			.signup-form input,
+			.signup-form button {
+				margin-bottom: 15px;
+			}
+			.hidden {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container-fluid">
+			<div class="row">
+				<ol class="breadcrumb">
+					<li class="breadcrumb-item"><a href="/CognitoAuth">Home</a></li>
+					<li class="breadcrumb-item active">SignIn</li>
+				</ol>
+			</div>
+		</div>
+		<div class="container signup-form">
+			<div class="row justify-content-center">
+				<div class="col-12 col-md-6 .offset-md-3">
+					<h1>SignIn</h1>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-12 col-md-6 .offset-md-3">
+					<input type="text" class="form-control" id="username" placeholder="username">
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-12 col-md-6 .offset-md-3">
+					<input type="password" class="form-control" id="password" placeholder="password">
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-12 col-md-6 .offset-md-3">
+					<button class="btn btn-primary btn-block" id="signin">SignIn</button>
+					<div>
+						<div class="alert alert-danger hidden" role="alert" id="error"></div>
+					</div>
+				</div>
+				
+			</div>
+		</div>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<!--
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+		-->
+
+		<script src="aws-cognito-sdk.min.js"></script>
+	    <script src="amazon-cognito-identity.min.js"></script>
+	    <script src="aws-sdk.min.js"></script>
+
+	    <script type="text/javascript">
+	    	// When using loose Javascript files:
+    		var CognitoUserPool = AmazonCognitoIdentity.CognitoUserPool;
+
+    		var poolData = {
+		        UserPoolId : 'eu-central-1_LaVer2K0o',
+		        ClientId : '5d9sc5ijad1fn4qimlqefb6ar5'
+		    };
+
+		    var userPool = new AWSCognito.CognitoIdentityServiceProvider.CognitoUserPool(poolData);
+
+		    var attributeList = [];
+
+		    // ***************************************************
+		    // Login and get identity
+		    // ***************************************************
+
+		    $("#signin").click(function(){
+		    	var username = $("#username").val();
+		    	var password = $("#password").val();
+
+			    var authenticationData = {
+			        Username : username,
+			        Password : password,
+			    };
+
+			    var authenticationDetails = new AWSCognito.CognitoIdentityServiceProvider.AuthenticationDetails(authenticationData);
+
+			    var userData = {
+			        Username : username,
+			        Pool : userPool
+			    };
+
+			    var cognitoUser = new AWSCognito.CognitoIdentityServiceProvider.CognitoUser(userData);
+			    cognitoUser.authenticateUser(authenticationDetails, {
+			        onSuccess: function (result) {
+			            console.log('access token + ' + result.getAccessToken().getJwtToken());
+
+			            
+			            AWS.config.region = 'eu-central-1';
+			            AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+			                IdentityPoolId : 'eu-central-1:5c682bd7-43cd-4048-b5a8-3cc77e5de831', // your identity pool id here
+			                Logins : {
+			                    // Change the key below according to the specific region your user pool is in.
+			                    'cognito-idp.eu-central-1.amazonaws.com/eu-central-1_LaVer2K0o' : result.getIdToken().getJwtToken()
+			                }
+			            });
+			            
+
+			            AWS.config.credentials.get(function(){
+			            	// this is a unique user key, use it as hashkey in your user database 
+			            	// @todo: better get it serverside
+			            	console.log("SUCCESS identityId:" + AWS.config.credentials.identityId);
+
+			            	$.ajax({
+			            		method: "GET",
+			            		url: "https://jbfzhbbbkl.execute-api.eu-central-1.amazonaws.com/prod/createrecipe",
+			            		headers: {
+			            			Authorization: result.getIdToken().getJwtToken()
+			            		},
+			            		data: {
+			            			hallo: "world"
+			            		}
+			            	}).done(function(response){
+			            		alert("response: "+ response);
+			            		console.log("response: "+ response);
+
+			            	});
+			            });
+
+			            // @todo: there are user roles for auth and unauth users, use the auth one in all lambda funtions with database transaactions
+
+			        },
+
+			        onFailure: function(err) {
+			            alert(err);
+			        },
+
+			    });
+		    });
+
+
+	    </script>
+	</body>
+</html>
